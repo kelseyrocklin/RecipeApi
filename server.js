@@ -8,11 +8,12 @@ var path 	= require('path');
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 
-// for local testing
-//mongoose.connect('mongodb://localhost/test');
+var morgan     = require('morgan');
+var User       = require('./user');
+var Recipe     = require('./recipe');
 
 // connect to the database at mongolab.
-// mongoose.connect('put the database location infor here');
+mongoose.connect('mongodb://kelsey:r3plenish@ds157459.mlab.com:57459/krocklintest');
 
 // Test for a successful connection
 var db = mongoose.connection;
@@ -32,6 +33,9 @@ app.use(function(req, res, next) {
 	next();
 });
 
+// for console logging
+app.use(morgan('dev'));
+
 // grab our index homepage
 app.get('/', function(req, res) {
 	res.sendFile(path.join(__dirname + '/index.html'));
@@ -48,6 +52,77 @@ apiRouter.use(function(req, res, next){
 apiRouter.get('/', function( req, res){
 	res.json({message: "Hello"});
 });
+
+// simple post function for creating new users
+// will add more later
+apiRouter.route('/users')
+
+    .post(function(req, res){
+
+        var user = new User({
+            name: req.body.username
+        });
+        user.save(function(err){
+            if (err) res.json(err);
+            else res.json({ message: 'User created!'});
+        });
+    })
+
+    //returns all the users
+    .get(function(req, res){
+        User.find(function(err, users){
+            if(err) res.send(err);
+
+            res.json(users);
+        });
+    });
+
+
+apiRouter.route('/recipes')
+
+    // makes a single recipe
+    .post(function(req, res){
+
+        var recipe = new Recipe({
+            name: req.body.name,
+            //postedBy: user._id,
+            ingredients: [{
+                in_name: req.body.ingredient,
+                measurement: req.body.measurement,
+                amount: req.body.amount
+            }]
+        });
+
+        recipe.save(function(err){
+            if (err) res.json(err);
+            else res.json({ message: 'Recipe created!'});
+        });
+    })
+
+    //returns all the recipes
+    .get(function(req, res){
+        Recipe.find(function(err, recipes){
+            if(err) res.send(err);
+
+            res.json(recipes);
+        });
+    });
+
+apiRouter.route('/recipes/:recipe_id')
+
+    // deletes a recipe by id
+    .delete(function (req, res) {
+        Recipe.remove({
+            _id: req.params.recipe_id
+        }, function(err, movie){
+            if (err) return res.send(err);
+
+            res.json({message: 'Successfully deleted'});
+        });
+    });
+
+// register our routes
+app.use('/', apiRouter);
 
 // start the server
 app.listen(1337);
