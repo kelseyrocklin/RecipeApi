@@ -50,19 +50,54 @@ apiRouter.route('/recipes')
             res.json(recipes);
         });
     });
-// return one recipe, no need to login *these haven't been changed, just moved around to put similar items together*
-apiRouter.route('recipes/:recipe_name')
-// deletes a recipe by title
-    .delete(function (req, res) {
-        Recipe.remove({
-            name: req.params.recipe_name
-        }, function(err, movie){
-            if (err) return res.send(err);
-            res.json({message: 'Successfully deleted by Name'});
-            res.json({message:'That is not your recipe to delete'})
-        });
+
+
+// *************************************************************************************************************
+//	Kelsey's section
+// *************************************************************************************************************
+
+// both of these search functions work in exactly the same way
+// these will search for a recipe/ingredient with any part of the search string matching
+// the searched for string should be located in the query parameters
+
+apiRouter.route('/search/recipes')
+    .get(function(req, res){
+        Recipe.find(
+            { "title": { $regex: req.query.name, $options: 'i' }  },
+            function(err, found){
+                if(err) return res.send(err);
+                res.json(found);
+            }
+        )
     });
-// returns by id but I'll be honest and not sure we need this. But it was in the original
+
+apiRouter.route('/search/ingredients')
+	.get(function(req, res){
+		Recipe.find(
+			{ "ingredients": { $regex: req.query.name, $options: 'i' } },
+			function(err, found){
+				if(err) return res.send(err);
+				res.json(found);
+			}
+		)
+	});
+
+apiRouter.route('/search/recipes_by_user')
+    .get(function(req, res){
+        Recipe.find(
+            { "postedBy": req.query.name },
+            function(err, found){
+                if(err) return res.send(err);
+                res.json(found);
+            }
+        )
+    });
+
+
+// For testing purposes only - take out of final project ----------------------------------------------------
+
+// This is so I can add and test stuff without messing with being a user
+
 apiRouter.route('/recipes/:recipe_id')
 //returns the recipe by id
     .get(function(req, res){
@@ -73,7 +108,45 @@ apiRouter.route('/recipes/:recipe_id')
 
             res.json(recipes);
         }));
+    })
+
+    .delete(function (req, res) {
+        Recipe.remove({
+            _id: req.params.recipe_id
+        }, function(err, recipe){
+            if (err) return res.send(err);
+
+            res.json({message: 'Successfully deleted'});
+        });
     });
+
+// this is the same as the one in the users section - just a function here
+// so I can add a recipe without being a user
+apiRouter.route('/recipes')
+    .post(function(req, res, next){
+        var recipe = new Recipe({
+            title: req.body.title,
+            postedBy: "Dev",
+            ingredients: req.body.ingredient,
+            direction: req.body.direction
+        });
+        recipe.save(function(err){
+            if (err) res.json(err);
+            else res.json({ message: 'Recipe created!'});
+        });
+    });
+
+
+// For testing purposes only - take out of final project ----------------------------------------------------
+
+// Kelsey - deleted a block here that was a repeat of some code below
+
+// *************************************************************************************************************
+// End Kelsey's section
+// *************************************************************************************************************
+
+
+
 
 //*************************************************************************************************************
 // Amanda Added here
@@ -169,11 +242,10 @@ apiRouter.route('/user_recipes')
             title: req.body.title,
             postedBy: req.header.username,
             // Made some changes for testing, couldn't get ref to work so chaining username from login
-            ingredients: [{
-                in_name: req.body.ingredient,
-                measurement: req.body.measurement,
-                amount: req.body.amount
-            }],
+            
+	    // edited by kelsey
+	    ingredients: req.body.ingredient,
+	
             direction: req.body.direction
         });
         recipe.save(function(err){
@@ -185,14 +257,17 @@ apiRouter.route('/user_recipes')
     .put(function (req, res) {
 
         // use the user model to find the user we want
+	// Kelsey - also this function allows any user to edit a recipe, not just the user that posted it - is that the intention?
         Recipe.findByTitle(req.params.recipe.name, function (err, recipe) {
 
             if (err) res.send(err);
             // update the recipe's info only if it's new
             if (req.body.name) recipe.name = req.body.name;
-            if (req.body.ingredients.ingredient) recipe.in_name = req.body.ingredients.ingredient;
-            if (req.body.ingredients.measurement) recipe.measurement = req.body.ingredients.measurement;
-            if (req.body.ingredients.amount) recipe.amount = req.body.ingredients.amount;
+            // changed this part because I took out the measurement part
+	    // have not tested this part in postman
+            if (req.body.ingredients.ingredient) recipe.ingredient = req.body.ingredients.ingredient;
+            //if (req.body.ingredients.measurement) recipe.measurement = req.body.ingredients.measurement;
+            //if (req.body.ingredients.amount) recipe.amount = req.body.ingredients.amount;
 
             // save the recipe
             recipe.save(function (err) {
