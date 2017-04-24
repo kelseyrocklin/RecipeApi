@@ -182,6 +182,9 @@ apiRouter.route('/user_recipes')
         });
     })
 // update a user's recipe
+
+// this function needs some love
+// this function would allow any logged-on user to edit any recipe
     .put(function (req, res) {
 
         // use the user model to find the user we want
@@ -191,8 +194,11 @@ apiRouter.route('/user_recipes')
             // update the recipe's info only if it's new
             if (req.body.name) recipe.name = req.body.name;
             if (req.body.ingredients.ingredient) recipe.in_name = req.body.ingredients.ingredient;
-            if (req.body.ingredients.measurement) recipe.measurement = req.body.ingredients.measurement;
-            if (req.body.ingredients.amount) recipe.amount = req.body.ingredients.amount;
+	
+	    // Note from Kelsey: removed this stuff
+		
+            //if (req.body.ingredients.measurement) recipe.measurement = req.body.ingredients.measurement;
+            //if (req.body.ingredients.amount) recipe.amount = req.body.ingredients.amount;
 
             // save the recipe
             recipe.save(function (err) {
@@ -204,6 +210,7 @@ apiRouter.route('/user_recipes')
         })
     })
 // User deletes a single recipe in the database
+// kelsey - not sure what's going on with this function
     .delete(function (req, res) {
         Recipe.remove({
             // change body to however to it's passing but not param with the token. My first thought is list recipes
