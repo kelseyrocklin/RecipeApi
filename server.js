@@ -197,7 +197,7 @@ apiRouter.post('/login', function(req, res) {
                     name: user.name,
                     username: user.username}, superSecret, { expiresIn: '72h' //three days
                 });
-                res.json({ success: true, message: 'Access granted', token: token});
+                res.json({ success: true, message: 'Access granted', token: token, username: req.body.username});
             }
         }
     });
@@ -240,7 +240,7 @@ apiRouter.route('/user_recipes')
     .post(function(req, res, next){
         var recipe = new Recipe({
             title: req.body.title,
-            postedBy: req.header.username,
+            postedBy: req.headers['username'],
             // Made some changes for testing, couldn't get ref to work so chaining username from login
             
 	    // edited by kelsey
@@ -252,6 +252,17 @@ apiRouter.route('/user_recipes')
             if (err) res.json(err);
             else res.json({ message: 'Recipe created!'});
         });
+    })
+    .get(function (req, res){
+        Recipe.find({postedBy: req.headers['username']}, 'title postedBy ingredients direction', function (err, data){
+            if (err)
+                res.send(err);
+            else if (!data)
+                return res.send({message: 'No recipes found'});
+            else
+                res.json(data);
+
+        })
     })
 // update a user's recipe
 
@@ -295,7 +306,7 @@ apiRouter.route('/user_recipes')
             // change body to however to it's passing but not param with the token. My first thought is list recipes
             // and delete from list with a bottom or something like he did in class with the to-do list example.
             name: req.body.recipe_name
-        }, function(err, movie){
+        }, function(err){
             if (err) return res.send(err);
             res.json({message: 'Successfully deleted by Name'});
             res.json({message:'That is not your recipe to delete'})
